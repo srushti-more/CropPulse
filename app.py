@@ -1,8 +1,7 @@
 import streamlit as st
 try:
-    from transformers import pipeline
+    from transformers import pipeline, AutoImageProcessor
 except ImportError:
-    # This forces the app to show a helpful message if the install fails again
     st.error("AI modules failed to load. Please check requirements.txt")
 from PIL import Image
 import json
@@ -65,16 +64,10 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-from transformers import pipeline, AutoImageProcessor
-
 @st.cache_resource
 def get_models():
     model_id = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"
-    
-    # Prepares the image for the model (Resizing, Normalization)
     processor = AutoImageProcessor.from_pretrained(model_id)
-    
-    # Creates the classification pipeline with the explicit processor
     return pipeline(
         "image-classification", 
         model=model_id,
@@ -102,8 +95,7 @@ with col_left:
     input_mode = st.radio(T["input_label"], ["File Upload", "Live Camera"])
     
     final_img = None
-   if input_mode == "File Upload":
-        # ADD THE NEW LINE HERE (Replacing the old one)
+    if input_mode == "File Upload":
         img_file = st.file_uploader(
             T["scan_header"], 
             type=["jpg", "png", "jpeg"], 
@@ -123,10 +115,8 @@ if final_img:
         st.subheader(T["results_header"])
         with st.spinner("AI analyzing..."):
             predictions = classifier(final_img)
-            res = predictions[0][0]
-
-            if isinstance(res, list):
-                res = res[0]
+            # Standardizing result extraction
+            res = predictions[0] if isinstance(predictions[0], dict) else predictions[0][0]
             
             raw_label = res['label']
             clean_label = raw_label.replace("___", " - ").replace("_", " ")
@@ -187,7 +177,6 @@ if st.session_state.scan_history:
     h_col1, h_col2 = st.columns([2, 1])
     
     with h_col1:
-        # INDENTED CORRECTLY: This block is inside 'with h_col1'
         fig_line = px.line(
             df_hist, 
             x="Time", 
@@ -200,7 +189,6 @@ if st.session_state.scan_history:
         st.plotly_chart(fig_line, use_container_width=True)
     
     with h_col2:
-        # INDENTED CORRECTLY: This block is inside 'with h_col2'
         st.write(f"**{T['history_insight']}:**")
         st.warning(df_hist['Condition'].mode()[0])
         st.dataframe(df_hist.tail(5), hide_index=True)
