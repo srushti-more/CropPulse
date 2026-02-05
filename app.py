@@ -8,7 +8,6 @@ from PIL import Image
 import json
 import pandas as pd
 import plotly.express as px
-import AutoImageProcessor
 from datetime import datetime
 
 # --- MULTILINGUAL DICTIONARY ---
@@ -72,10 +71,10 @@ from transformers import pipeline, AutoImageProcessor
 def get_models():
     model_id = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"
     
-    # 1. Explicitly load the processor
+    # Prepares the image for the model (Resizing, Normalization)
     processor = AutoImageProcessor.from_pretrained(model_id)
     
-    # 2. Pass the processor directly to the pipeline
+    # Creates the classification pipeline with the explicit processor
     return pipeline(
         "image-classification", 
         model=model_id,
@@ -83,6 +82,7 @@ def get_models():
         framework="pt"
     )
 
+classifier = get_models()
 classifier = get_models()
 
 # --- SIDEBAR ---
