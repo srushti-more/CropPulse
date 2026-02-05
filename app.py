@@ -83,7 +83,6 @@ def get_models():
     )
 
 classifier = get_models()
-classifier = get_models()
 
 # --- SIDEBAR ---
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2760/2760144.png", width=80)
@@ -103,14 +102,19 @@ with col_left:
     input_mode = st.radio(T["input_label"], ["File Upload", "Live Camera"])
     
     final_img = None
-    if input_mode == "File Upload":
-        img_file = st.file_uploader("", type=["jpg", "png", "jpeg"])
+   if input_mode == "File Upload":
+        # ADD THE NEW LINE HERE (Replacing the old one)
+        img_file = st.file_uploader(
+            T["scan_header"], 
+            type=["jpg", "png", "jpeg"], 
+            label_visibility="collapsed"
+        )
         if img_file:
             final_img = Image.open(img_file).convert("RGB")
     else:
         use_cam = st.toggle(T["cam_toggle"])
         if use_cam:
-            cam_file = st.camera_input("")
+            cam_file = st.camera_input(T["scan_header"], label_visibility="collapsed")
             if cam_file:
                 final_img = Image.open(cam_file).convert("RGB")
 
@@ -120,6 +124,9 @@ if final_img:
         with st.spinner("AI analyzing..."):
             predictions = classifier(final_img)
             res = predictions[0][0]
+
+            if isinstance(res, list):
+                res = res[0]
             
             raw_label = res['label']
             clean_label = raw_label.replace("___", " - ").replace("_", " ")
