@@ -113,3 +113,10 @@ with c2:
         "Metric": ["Water Saved", "Pesticide Saved", "Yield Protection"],
         "Value": ["1,200 Liters", "12.5 kg", "↑ 18%"]
     }))
+
+    @st.cache_resource
+def get_models():
+    model_id = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"
+    # We use the 'image-classification' pipeline but specifically tell it 
+    # to ignore the missing image_processor_type if it gets confused.
+    return pipeline("image-classification", model=model_id)
