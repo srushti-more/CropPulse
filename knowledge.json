@@ -1,0 +1,16 @@
+{
+    "Rice_Leaf_Blast": {
+        "symptoms": "Spindle-shaped spots with gray centers.",
+        "pesticide": "Tricyclazole 75 WP",
+        "dosage": "0.6 g per liter of water",
+        "optimization": "Apply only to infected patches. Savings: 70% chemical waste reduction.",
+        "hindi": "चावल का पत्ता ब्लास्ट: ट्राइसाइक्लाज़ोल 75 डब्ल्यूपी का प्रयोग करें।"
+    },
+    "Cotton_Aphids": {
+        "symptoms": "Curled leaves, sticky honeydew on surface.",
+        "pesticide": "Imidacloprid 17.8 SL",
+        "dosage": "0.5 ml per liter",
+        "optimization": "Target perimeter of the field first. Savings: 40% volume reduction.",
+        "hindi": "कपास के एफिड्स: इमिडाक्लोप्रिड 17.8 एसएल का प्रयोग करें।"
+    }
+}
