@@ -64,13 +64,22 @@ st.markdown("""
     .stMetric { background: white; padding: 15px; border-radius: 10px; box-shadow: 0px 2px 5px rgba(0,0,0,0.1); }
     </style>
     """, unsafe_allow_html=True)
+    
+from transformers import pipeline, AutoImageProcessor
 
 @st.cache_resource
 def get_models():
-    # Explicitly using PyTorch framework to avoid loading errors
-    return pipeline("image-classification", 
-                    model="linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification",
-                    framework="pt")
+    model_name = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"
+    
+    # Explicitly load the processor to handle tensor conversion
+    processor = AutoImageProcessor.from_pretrained(model_name)
+    
+    return pipeline(
+        "image-classification", 
+        model=model_name,
+        image_processor=processor, # Pass the processor here
+        framework="pt"
+    )
 
 classifier = get_models()
 
