@@ -1,5 +1,9 @@
 import streamlit as st
-from transformers import pipeline
+try:
+    from transformers import pipeline
+except ImportError:
+    # This forces the app to show a helpful message if the install fails again
+    st.error("AI modules failed to load. Please check requirements.txt")
 from PIL import Image
 import json
 import pandas as pd
