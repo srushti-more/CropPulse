@@ -64,7 +64,6 @@ st.markdown("""
 
 @st.cache_resource
 def get_models():
-    # Loading the plant disease identification model
     return pipeline("image-classification", model="linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification")
 
 classifier = get_models()
@@ -94,7 +93,6 @@ with col_left:
         if img_file:
             final_img = Image.open(img_file).convert("RGB")
     else:
-        # Camera is only activated if the user switches this toggle
         use_cam = st.toggle(T["cam_toggle"])
         if use_cam:
             cam_file = st.camera_input("")
@@ -109,12 +107,10 @@ if final_img:
             predictions = classifier([final_img])
             res = predictions[0][0]
             
-            # Cleaning the raw labels for better UI display
             raw_label = res['label']
             clean_label = raw_label.replace("___", " - ").replace("_", " ")
             confidence = res['score']
 
-            # Display Diagnosis Card
             st.metric("Condition", clean_label, f"{confidence*100:.1f}% Match")
 
             # Update History Logic
@@ -125,32 +121,30 @@ if final_img:
                 "Confidence": round(confidence*100, 1), 
                 "Score": round(confidence*10, 1)
             }
-            # Append only if it's a new unique scan time
             if not st.session_state.scan_history or st.session_state.scan_history[-1]["Time"] != now:
                 st.session_state.scan_history.append(new_entry)
 
-            # Load Knowledge Base from JSON
+            # --- KNOWLEDGE BASE LOOKUP (FIXED) ---
             try:
                 with open('knowledge.json') as f: 
                     kb = json.load(f)
-                data = kb.get(raw_label, {
-                    "symptoms": "N/A", 
-                    "pesticide": "Check manual or consult expert", 
-                    "hindi_pest": "विशेषज्ञ से पूछें"
-                })
+                # Flexible lookup: tries raw label first, then the cleaned version
+                data = kb.get(raw_label) or kb.get(clean_label) or {
+                    "symptoms": "Detailed symptoms not found in database.", 
+                    "pesticide": "Consult a local agricultural officer.", 
+                    "hindi_pest": "स्थानीय कृषि अधिकारी से सलाह लें।"
+                }
             except:
-                data = {"symptoms": "KB file not found", "pesticide": "N/A", "hindi_pest": "त्रुटि"}
+                data = {"symptoms": "Knowledge base file error.", "pesticide": "N/A", "hindi_pest": "त्रुटि"}
 
-            # Recommendations Tabs
             t1, t2, t3 = st.tabs([T["treatment_tab"], T["opti_tab"], T["expert_header"]])
             
             with t1:
-                st.write(f"**Symptoms:** {data.get('symptoms', 'No symptoms listed.')}")
-                st.success(f"**Recommended:** {data['pesticide'] if selected_lang == 'English' else data.get('hindi_pest', 'N/A')}")
+                st.info(f"**Symptoms:** {data.get('symptoms')}")
+                st.success(f"**Treatment:** {data['pesticide'] if selected_lang == 'English' else data.get('hindi_pest')}")
             
             with t2:
-                # DYNAMIC ANALYTICS
-                water_baseline = field_size * 200 # 200L/acre baseline
+                water_baseline = field_size * 200 
                 water_saved = water_baseline * (1 - confidence)
                 pest_saved = field_size * 2.5 * confidence
                 
@@ -158,49 +152,46 @@ if final_img:
                 st.write(f"💧 {T['metrics'][0]}: **{water_saved:.1f} Liters**")
                 st.write(f"🧪 {T['metrics'][1]}: **{pest_saved:.2f} kg**")
 
-                # Comparison Chart
                 chart_df = pd.DataFrame({
                     "Method": ["Traditional", "CropPulse AI"],
                     "Resources (L)": [water_baseline, water_baseline - water_saved]
                 })
                 fig_bar = px.bar(chart_df, x="Method", y="Resources (L)", color="Method", 
-                                 color_discrete_sequence=['#bdbdbd', '#2e7d32'])
-                st.plotly_chart(fig_bar, width='stretch')
+                                 color_discrete_map={"Traditional": "#bdbdbd", "CropPulse AI": "#2e7d32"})
+                st.plotly_chart(fig_bar, use_container_width=True)
 
             with t3:
                 with st.form("expert_form"):
-                    u_name = st.text_input("Name / नाम")
                     u_phone = st.text_input("Mobile / फ़ोन")
                     u_msg = st.text_area("Describe issue / समस्या बताएं")
                     if st.form_submit_button(T["expert_btn"]):
-                        st.balloons()
                         st.success(f"{T['expert_success']} {u_phone}")
 
-# --- HISTORY & GLOBAL ANALYTICS ---
+# --- HISTORY SECTION (FIXED VALUEERROR) ---
 st.divider()
 st.subheader(T["history_header"])
 
 if st.session_state.scan_history:
-    history_df = pd.DataFrame(st.session_state.scan_history)
-    
+    df_hist = pd.DataFrame(st.session_state.scan_history)
     h_col1, h_col2 = st.columns([2, 1])
+    
     with h_col1:
-        fig_line = px.line(history_df, x="Time", y="Score", markers=True, 
-                           title="Farm Health Progression Index")
-        fig_line.update_layout(yaxis_range=[0, 10], line_color='#2e7d32')
-        st.plotly_chart(fig_line, width='stretch')
+        # Corrected: Color settings moved to color_discrete_sequence to avoid ValueError
+        fig_line = px.line(df_hist, x="Time", y="Score", markers=True, 
+                           title="Farm Health Progression Index",
+                           color_discrete_sequence=['#2e7d32'])
+        fig_line.update_layout(yaxis_range=[0, 10]) 
+        st.plotly_chart(fig_line, use_container_width=True)
     
     with h_col2:
         st.write(f"**{T['history_insight']}:**")
-        st.warning(history_df['Condition'].mode()[0])
+        st.warning(df_hist['Condition'].mode()[0])
         st.write("#### Recent Scans")
-        st.dataframe(history_df.tail(5), hide_index=True)
+        st.dataframe(df_hist.tail(5), hide_index=True)
 
-    # Global Farm Summary Metrics
     st.divider()
     m1, m2, m3 = st.columns(3)
-    # Using session history to calculate global impact
-    avg_conf = history_df['Confidence'].mean() / 100
+    avg_conf = df_hist['Confidence'].mean() / 100
     m1.metric(T["metrics"][0], f"{field_size * 450 * avg_conf:.0f} L")
     m2.metric(T["metrics"][1], f"{field_size * 1.2 * avg_conf:.1f} kg")
     m3.metric(T["metrics"][2], f"↑ {15 + (field_size * 0.5):.1f}%")
