@@ -169,7 +169,7 @@ if final_img:
                     if st.form_submit_button(T["expert_btn"]):
                         st.success(f"{T['expert_success']} {u_phone}")
 
-# --- HISTORY SECTION (FIXED VALUEERROR) ---
+# --- HISTORY SECTION ---
 st.divider()
 st.subheader(T["history_header"])
 
@@ -178,29 +178,25 @@ if st.session_state.scan_history:
     h_col1, h_col2 = st.columns([2, 1])
     
     with h_col1:
-    # Set the color inside the px.line function, not update_layout
-    fig_line = px.line(df_hist, x="Time", y="Score", markers=True, 
-                       title="Farm Health Progression Index",
-                       color_discrete_sequence=['#2e7d32']) # Correct way to set line color
-    
-    # Only use update_layout for axes and general styling
-    fig_line.update_layout(yaxis_range=[0, 10]) 
-    st.plotly_chart(fig_line, use_container_width=True)
+        # This block MUST be indented
+        fig_line = px.line(
+            df_hist, 
+            x="Time", 
+            y="Score", 
+            markers=True, 
+            title="Farm Health Progression Index",
+            color_discrete_sequence=['#2e7d32']
+        )
+        fig_line.update_layout(yaxis_range=[0, 10]) 
+        st.plotly_chart(fig_line, use_container_width=True)
     
     with h_col2:
+        # This block MUST also be indented
         st.write(f"**{T['history_insight']}:**")
         st.warning(df_hist['Condition'].mode()[0])
-        st.write("#### Recent Scans")
         st.dataframe(df_hist.tail(5), hide_index=True)
-
-    st.divider()
-    m1, m2, m3 = st.columns(3)
-    avg_conf = df_hist['Confidence'].mean() / 100
-    m1.metric(T["metrics"][0], f"{field_size * 450 * avg_conf:.0f} L")
-    m2.metric(T["metrics"][1], f"{field_size * 1.2 * avg_conf:.1f} kg")
-    m3.metric(T["metrics"][2], f"↑ {15 + (field_size * 0.5):.1f}%")
 else:
-    st.info("Perform a scan to begin tracking farm health history.")
+    st.info("Perform a scan to see health history.")
 
 # import streamlit as st
 # from transformers import pipeline
