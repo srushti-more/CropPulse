@@ -64,8 +64,10 @@ st.markdown("""
 
 @st.cache_resource
 def get_models():
-    return pipeline("image-classification", model="linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification")
-
+    # Adding a specific framework ensures the model loads correctly on Streamlit's Linux servers
+    return pipeline("image-classification", 
+                    model="linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification",
+                    framework="pt") # Forces PyTorch backend
 classifier = get_models()
 
 # --- SIDEBAR & GLOBAL SETTINGS ---
@@ -176,12 +178,14 @@ if st.session_state.scan_history:
     h_col1, h_col2 = st.columns([2, 1])
     
     with h_col1:
-        # Corrected: Color settings moved to color_discrete_sequence to avoid ValueError
-        fig_line = px.line(df_hist, x="Time", y="Score", markers=True, 
-                           title="Farm Health Progression Index",
-                           color_discrete_sequence=['#2e7d32'])
-        fig_line.update_layout(yaxis_range=[0, 10]) 
-        st.plotly_chart(fig_line, use_container_width=True)
+    # Set the color inside the px.line function, not update_layout
+    fig_line = px.line(df_hist, x="Time", y="Score", markers=True, 
+                       title="Farm Health Progression Index",
+                       color_discrete_sequence=['#2e7d32']) # Correct way to set line color
+    
+    # Only use update_layout for axes and general styling
+    fig_line.update_layout(yaxis_range=[0, 10]) 
+    st.plotly_chart(fig_line, use_container_width=True)
     
     with h_col2:
         st.write(f"**{T['history_insight']}:**")
