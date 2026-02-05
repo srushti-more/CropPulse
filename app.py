@@ -8,6 +8,7 @@ from PIL import Image
 import json
 import pandas as pd
 import plotly.express as px
+import AutoImageProcessor
 from datetime import datetime
 
 # --- MULTILINGUAL DICTIONARY ---
@@ -64,20 +65,21 @@ st.markdown("""
     .stMetric { background: white; padding: 15px; border-radius: 10px; box-shadow: 0px 2px 5px rgba(0,0,0,0.1); }
     </style>
     """, unsafe_allow_html=True)
-    
+
 from transformers import pipeline, AutoImageProcessor
 
 @st.cache_resource
 def get_models():
-    model_name = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"
+    model_id = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"
     
-    # Explicitly load the processor to handle tensor conversion
-    processor = AutoImageProcessor.from_pretrained(model_name)
+    # 1. Explicitly load the processor
+    processor = AutoImageProcessor.from_pretrained(model_id)
     
+    # 2. Pass the processor directly to the pipeline
     return pipeline(
         "image-classification", 
-        model=model_name,
-        image_processor=processor, # Pass the processor here
+        model=model_id,
+        image_processor=processor,
         framework="pt"
     )
 
@@ -116,7 +118,7 @@ if final_img:
     with col_right:
         st.subheader(T["results_header"])
         with st.spinner("AI analyzing..."):
-            predictions = classifier([final_img])
+            predictions = classifier(final_img)
             res = predictions[0][0]
             
             raw_label = res['label']
