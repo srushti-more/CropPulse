@@ -16,7 +16,7 @@ LANG_DATA = {
         "treatment_tab": "💊 Treatment Plan",
         "opti_tab": "📉 Smart Savings",
         "expert_header": "👨‍🔬 Consult Expert",
-        "history_header": "📈 7-Day Farm Health Trend",
+        "history_header": "📈 Farm Health Trend",
         "metrics": ["Water Saved", "Pesticide Saved", "Yield Protection"],
         "lang_label": "Language",
         "field_label": "Field Size (Acres)",
@@ -34,7 +34,7 @@ LANG_DATA = {
         "treatment_tab": "💊 उपचार योजना",
         "opti_tab": "📉 स्मार्ट बचत",
         "expert_header": "👨‍🔬 विशेषज्ञ से सलाह लें",
-        "history_header": "📈 7-दिवसीय फार्म स्वास्थ्य रुझान",
+        "history_header": "📈 फार्म स्वास्थ्य रुझान",
         "metrics": ["बचाया गया पानी", "बचाया गया कीटनाशक", "पैदावार सुरक्षा"],
         "lang_label": "भाषा",
         "field_label": "खेत का आकार (एकड़)",
@@ -49,7 +49,6 @@ LANG_DATA = {
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="CropPulse AI", page_icon="🌱", layout="wide")
 
-# Initialize Session State for History
 if 'scan_history' not in st.session_state:
     st.session_state.scan_history = []
 
@@ -64,19 +63,18 @@ st.markdown("""
 
 @st.cache_resource
 def get_models():
-    # Adding a specific framework ensures the model loads correctly on Streamlit's Linux servers
+    # Explicitly using PyTorch framework to avoid loading errors
     return pipeline("image-classification", 
                     model="linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification",
-                    framework="pt") # Forces PyTorch backend
+                    framework="pt")
+
 classifier = get_models()
 
-# --- SIDEBAR & GLOBAL SETTINGS ---
+# --- SIDEBAR ---
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2760/2760144.png", width=80)
 selected_lang = st.sidebar.selectbox("Language / भाषा", ["English", "Hindi"])
 T = LANG_DATA[selected_lang]
-
 field_size = st.sidebar.number_input(T["field_label"], min_value=0.1, value=1.0, step=0.5)
-st.sidebar.divider()
 
 # --- HEADER ---
 st.title(T["title"])
@@ -101,7 +99,6 @@ with col_left:
             if cam_file:
                 final_img = Image.open(cam_file).convert("RGB")
 
-# --- RESULTS & LOGIC ---
 if final_img:
     with col_right:
         st.subheader(T["results_header"])
@@ -115,29 +112,23 @@ if final_img:
 
             st.metric("Condition", clean_label, f"{confidence*100:.1f}% Match")
 
-            # Update History Logic
+            # Update History
             now = datetime.now().strftime("%H:%M:%S")
-            new_entry = {
-                "Time": now, 
-                "Condition": clean_label, 
-                "Confidence": round(confidence*100, 1), 
-                "Score": round(confidence*10, 1)
-            }
+            new_entry = {"Time": now, "Condition": clean_label, "Confidence": round(confidence*100, 1), "Score": round(confidence*10, 1)}
             if not st.session_state.scan_history or st.session_state.scan_history[-1]["Time"] != now:
                 st.session_state.scan_history.append(new_entry)
 
-            # --- KNOWLEDGE BASE LOOKUP (FIXED) ---
+            # --- KNOWLEDGE BASE LOOKUP ---
             try:
-                with open('knowledge.json') as f: 
+                with open('knowledge.json') as f:
                     kb = json.load(f)
-                # Flexible lookup: tries raw label first, then the cleaned version
                 data = kb.get(raw_label) or kb.get(clean_label) or {
-                    "symptoms": "Detailed symptoms not found in database.", 
-                    "pesticide": "Consult a local agricultural officer.", 
-                    "hindi_pest": "स्थानीय कृषि अधिकारी से सलाह लें।"
+                    "symptoms": "Detailed symptoms not found for this Indian crop variant.", 
+                    "pesticide": "Consult a local KVK (Krishi Vigyan Kendra) expert.", 
+                    "hindi_pest": "स्थानीय कृषि विज्ञान केंद्र विशेषज्ञ से सलाह लें।"
                 }
             except:
-                data = {"symptoms": "Knowledge base file error.", "pesticide": "N/A", "hindi_pest": "त्रुटि"}
+                data = {"symptoms": "Knowledge base not loaded.", "pesticide": "N/A", "hindi_pest": "त्रुटि"}
 
             t1, t2, t3 = st.tabs([T["treatment_tab"], T["opti_tab"], T["expert_header"]])
             
@@ -146,14 +137,10 @@ if final_img:
                 st.success(f"**Treatment:** {data['pesticide'] if selected_lang == 'English' else data.get('hindi_pest')}")
             
             with t2:
-                water_baseline = field_size * 200 
+                water_baseline = field_size * 200
                 water_saved = water_baseline * (1 - confidence)
-                pest_saved = field_size * 2.5 * confidence
-                
-                st.info(f"Analysis for **{clean_label}** zones:")
                 st.write(f"💧 {T['metrics'][0]}: **{water_saved:.1f} Liters**")
-                st.write(f"🧪 {T['metrics'][1]}: **{pest_saved:.2f} kg**")
-
+                
                 chart_df = pd.DataFrame({
                     "Method": ["Traditional", "CropPulse AI"],
                     "Resources (L)": [water_baseline, water_baseline - water_saved]
@@ -178,7 +165,7 @@ if st.session_state.scan_history:
     h_col1, h_col2 = st.columns([2, 1])
     
     with h_col1:
-        # This block MUST be indented
+        # INDENTED CORRECTLY: This block is inside 'with h_col1'
         fig_line = px.line(
             df_hist, 
             x="Time", 
@@ -191,7 +178,7 @@ if st.session_state.scan_history:
         st.plotly_chart(fig_line, use_container_width=True)
     
     with h_col2:
-        # This block MUST also be indented
+        # INDENTED CORRECTLY: This block is inside 'with h_col2'
         st.write(f"**{T['history_insight']}:**")
         st.warning(df_hist['Condition'].mode()[0])
         st.dataframe(df_hist.tail(5), hide_index=True)
