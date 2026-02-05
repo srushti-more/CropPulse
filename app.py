@@ -8,113 +8,76 @@ import plotly.express as px
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="CropPulse", page_icon="🌱", layout="wide")
 
-# --- CUSTOM CSS FOR AGRI-TECH UI ---
-st.markdown("""
-    <style>
-    .reportview-container { background: #fdfdfd; }
-    .stMetric { background: #e8f5e9; padding: 15px; border-radius: 10px; border-left: 5px solid #2e7d32; }
-    .stAlert { border-radius: 10px; }
-    h1 { color: #1b5e20; font-family: 'Helvetica'; }
-    </style>
-    """, unsafe_allow_html=True)
-
 # --- LOAD MODELS ---
 @st.cache_resource
 def get_models():
-    # Loading a specialized plant disease model from HuggingFace
+    # Using the specific MobileNetV2 model
     model_name = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"
     return pipeline("image-classification", model=model_name)
 
-# This must be at the top level (no spaces at the start of the line)
 classifier = get_models()
 
-# --- HEADER & SIDEBAR ---
+# --- HEADER ---
 st.title("🌿 CropPulse: Precision Agriculture")
 st.markdown("### *AI-Powered Pest Detection & Pesticide Optimizer*")
 
+# --- SIDEBAR ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2760/2760144.png", width=100)
     st.header("Control Panel")
     lang = st.selectbox("Language / भाषा", ["English", "Hindi"])
     field_size = st.number_input("Field Size (Acres)", min_value=0.1, value=1.0)
-    st.divider()
-    st.info("Offline Mode: Enabled (Local Weights)")
 
-# --- MAIN APP INTERFACE ---
+# --- MAIN INTERFACE ---
 col_input, col_results = st.columns([1, 1])
 
 with col_input:
     st.subheader("📸 Scan Crop")
-    input_mode = st.radio("Choose Input", ["Camera", "Upload Image"])
+    img_file = st.file_uploader("Upload leaf image...", type=["jpg", "png", "jpeg"])
+    # If camera is used, it replaces the uploader
+    cam_file = st.camera_input("Or take a photo")
     
-    if input_mode == "Camera":
-        img_file = st.camera_input("Take a photo of the leaf")
-    else:
-        img_file = st.file_uploader("Upload leaf image...", type=["jpg", "png", "jpeg"])
+    final_img = cam_file if cam_file else img_file
 
-if img_file:
-    img = Image.open(img_file)
+if final_img:
+    # IMPORTANT: Force RGB to avoid transparency/alpha channel issues
+    img = Image.open(final_img).convert("RGB")
     
     with col_results:
         st.subheader("🔍 AI Diagnosis")
         with st.spinner("Analyzing tissue health..."):
-            # Model Inference
-            predictions = classifier(img)
-            label = predictions[0]['label']
-            score = predictions[0]['score']
+            # FIX: Passing as a list [img] prevents the 'Unable to create tensor' error
+            predictions = classifier([img])
+            res = predictions[0][0] # Get top result from the batch
+            label = res['label']
+            score = res['score']
 
-            # Display Diagnosis
             st.metric("Detected Condition", label, f"{score*100:.1f}% Match")
 
-            # RAG Logic: Fetch from knowledge.json
+            # Load Knowledge Base
             try:
                 with open('knowledge.json') as f:
                     kb = json.load(f)
-                
-                data = kb.get(label, {
-                    "symptoms": "Condition unknown. Check for moisture stress.",
-                    "pesticide": "N/A",
-                    "dosage": "Consult expert",
-                    "optimization": "General maintenance required.",
-                    "hindi": "अज्ञात स्थिति।"
-                })
-            except FileNotFoundError:
-                st.error("knowledge.json file missing!")
-                data = {"symptoms": "Error: Knowledge base not found.", "pesticide": "N/A", "dosage": "N/A", "optimization": "N/A", "hindi": "त्रुटि"}
+                data = kb.get(label, {"symptoms": "Check moisture levels.", "pesticide": "Consult expert", "dosage": "N/A", "optimization": "N/A", "hindi": "अज्ञात"})
+            except:
+                data = {"symptoms": "Data missing.", "pesticide": "N/A", "dosage": "N/A", "optimization": "N/A", "hindi": "त्रुटि"}
 
-            # Show Recommendation Cards
             st.warning(f"**Symptoms:** {data['symptoms']}")
             
-            tab1, tab2 = st.tabs(["💊 Treatment", "📉 Smart Optimization"])
-            
-            with tab1:
-                treatment_text = data['pesticide'] if lang == "English" else data['hindi']
-                st.success(f"**Recommended:** {treatment_text}")
-                st.write(f"**Dosage:** {data['dosage']}")
-            
-            with tab2:
-                st.info(f"**Efficiency Gain:** {data['optimization']}")
-                spray_area = field_size * 0.25 # Simulated 25% targeted spray
-                st.write(f"**Targeted Spray Area:** {spray_area:.2f} Acres")
-                st.write(f"**Chemicals Saved:** {(field_size - spray_area):.2f} Acres equivalent")
+            t1, t2 = st.tabs(["💊 Treatment", "📉 Optimization"])
+            with t1:
+                st.success(f"**Recommended:** {data['pesticide'] if lang == 'English' else data['hindi']}")
+            with t2:
+                st.info(f"**Spray Efficiency:** {field_size * 0.25:.2f} Acres Targeted")
 
-# --- HISTORICAL TRACKING (For Judges) ---
+# --- ANALYTICS ---
 st.divider()
 st.subheader("📊 Farm Health Analytics")
 c1, c2 = st.columns(2)
-
 with c1:
-    # Simulated historical data
-    chart_data = pd.DataFrame({
-        'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-        'Pest Density': [0.8, 0.6, 0.4, 0.2, 0.1]
-    })
-    fig = px.area(chart_data, x='Day', y='Pest Density', title="Recovery Rate (Post-Treatment)")
-    st.plotly_chart(fig, use_container_width=True)
+    df = pd.DataFrame({'Day': ['M', 'T', 'W', 'T', 'F'], 'Pests': [0.8, 0.6, 0.4, 0.2, 0.1]})
+    fig = px.area(df, x='Day', y='Pests')
+    # Use width='stretch' to satisfy the 2026 Streamlit requirement
+    st.plotly_chart(fig, width='stretch') 
 
 with c2:
-    st.write("#### Resource Impact")
-    st.table(pd.DataFrame({
-        "Metric": ["Water Saved", "Pesticide Saved", "Yield Protection"],
-        "Value": ["1,200 Liters", "12.5 kg", "↑ 18%"]
-    }))
+    st.table(pd.DataFrame({"Metric": ["Water Saved", "Yield ↑"], "Value": ["1.2k L", "18%"]}))

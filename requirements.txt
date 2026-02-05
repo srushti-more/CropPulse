@@ -1,6 +1,8 @@
 streamlit==1.54.0
 transformers==4.40.0
 torch==2.2.0
+torchvision==0.17.0
+numpy<2.0.0
 timm
 pillow
 pandas
