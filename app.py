@@ -25,6 +25,7 @@ def get_models():
     model_name = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"
     return pipeline("image-classification", model=model_name)
 
+# This must be at the top level (no spaces at the start of the line)
 classifier = get_models()
 
 # --- HEADER & SIDEBAR ---
@@ -66,16 +67,20 @@ if img_file:
             st.metric("Detected Condition", label, f"{score*100:.1f}% Match")
 
             # RAG Logic: Fetch from knowledge.json
-            with open('knowledge.json') as f:
-                kb = json.load(f)
-            
-            data = kb.get(label, {
-                "symptoms": "Condition unknown. Check for moisture stress.",
-                "pesticide": "N/A",
-                "dosage": "Consult expert",
-                "optimization": "General maintenance required.",
-                "hindi": "अज्ञात स्थिति।"
-            })
+            try:
+                with open('knowledge.json') as f:
+                    kb = json.load(f)
+                
+                data = kb.get(label, {
+                    "symptoms": "Condition unknown. Check for moisture stress.",
+                    "pesticide": "N/A",
+                    "dosage": "Consult expert",
+                    "optimization": "General maintenance required.",
+                    "hindi": "अज्ञात स्थिति।"
+                })
+            except FileNotFoundError:
+                st.error("knowledge.json file missing!")
+                data = {"symptoms": "Error: Knowledge base not found.", "pesticide": "N/A", "dosage": "N/A", "optimization": "N/A", "hindi": "त्रुटि"}
 
             # Show Recommendation Cards
             st.warning(f"**Symptoms:** {data['symptoms']}")
@@ -113,10 +118,3 @@ with c2:
         "Metric": ["Water Saved", "Pesticide Saved", "Yield Protection"],
         "Value": ["1,200 Liters", "12.5 kg", "↑ 18%"]
     }))
-
-    @st.cache_resource
-def get_models():
-    model_id = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"
-    # We use the 'image-classification' pipeline but specifically tell it 
-    # to ignore the missing image_processor_type if it gets confused.
-    return pipeline("image-classification", model=model_id)
