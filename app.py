@@ -67,6 +67,7 @@ st.markdown("""
 @st.cache_resource
 def get_models():
     model_id = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"
+    # This processor ensures the image is resized to 224x224 and colors are normalized
     processor = AutoImageProcessor.from_pretrained(model_id)
     return pipeline(
         "image-classification", 
@@ -115,6 +116,11 @@ if final_img:
         st.subheader(T["results_header"])
         with st.spinner("AI analyzing..."):
             predictions = classifier(final_img)
+
+            top_prediction = max(predictions, key=lambda x: x['score'])
+            
+            raw_label = top_prediction['label']
+            confidence = top_prediction['score']
             # Standardizing result extraction
             res = predictions[0] if isinstance(predictions[0], dict) else predictions[0][0]
             
@@ -195,147 +201,3 @@ if st.session_state.scan_history:
 else:
     st.info("Perform a scan to see health history.")
 
-# import streamlit as st
-# from transformers import pipeline
-# from PIL import Image
-# import json
-# import pandas as pd
-# import plotly.express as px
-
-# # --- MULTILINGUAL DICTIONARY ---
-# LANG_DATA = {
-#     "English": {
-#         "title": "CropPulse: Precision AI",
-#         "subtitle": "AI-Powered Diagnosis & Resource Optimizer",
-#         "scan_header": "📸 Scan Crop",
-#         "results_header": "🔍 AI Diagnosis",
-#         "treatment_tab": "💊 Treatment Plan",
-#         "opti_tab": "📉 Smart Savings",
-#         "expert_header": "👨‍🔬 Consult Expert",
-#         "metrics": ["Water Saved", "Pesticide Saved", "Yield Protection"],
-#         "lang_label": "Language",
-#         "field_label": "Field Size (Acres)",
-#         "expert_btn": "Message Agricultural Expert",
-#         "expert_success": "Request sent! An expert will contact you at ",
-#     },
-#     "Hindi": {
-#         "title": "क्रॉपपल्स (CropPulse): सटीक एआई",
-#         "subtitle": "एआई-संचालित निदान और संसाधन अनुकूलक",
-#         "scan_header": "📸 फसल स्कैन करें",
-#         "results_header": "🔍 एआई निदान",
-#         "treatment_tab": "💊 उपचार योजना",
-#         "opti_tab": "📉 स्मार्ट बचत",
-#         "expert_header": "👨‍🔬 विशेषज्ञ से सलाह लें",
-#         "metrics": ["बचाया गया पानी", "बचाया गया कीटनाशक", "पैदावार सुरक्षा"],
-#         "lang_label": "भाषा",
-#         "field_label": "खेत का आकार (एकड़)",
-#         "expert_btn": "कृषि विशेषज्ञ को संदेश भेजें",
-#         "expert_success": "अनुरोध भेज दिया गया! एक विशेषज्ञ आपसे संपर्क करेगा: ",
-#     }
-# }
-
-# # --- PAGE CONFIG ---
-# st.set_page_config(page_title="CropPulse AI", page_icon="🌱", layout="wide")
-
-# # UI Styling
-# st.markdown("""
-#     <style>
-#     .main { background-color: #f0f4f0; }
-#     .stButton>button { width: 100%; border-radius: 20px; background-color: #2e7d32; color: white; }
-#     .metric-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 2px 2px 10px rgba(0,0,0,0.05); }
-#     </style>
-#     """, unsafe_allow_html=True)
-
-# @st.cache_resource
-# def get_models():
-#     return pipeline("image-classification", model="linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification")
-
-# classifier = get_models()
-
-# # --- SIDEBAR & GLOBAL SETTINGS ---
-# st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2760/2760144.png", width=80)
-# selected_lang = st.sidebar.selectbox("Language / भाषा", ["English", "Hindi"])
-# T = LANG_DATA[selected_lang]
-
-# field_size = st.sidebar.number_input(T["field_label"], min_value=0.1, value=1.0)
-
-# # --- HEADER ---
-# st.title(T["title"])
-# st.markdown(f"*{T['subtitle']}*")
-
-# # --- MAIN APP ---
-# col_left, col_right = st.columns([1, 1])
-
-# with col_left:
-#     st.subheader(T["scan_header"])
-#     img_file = st.file_uploader("", type=["jpg", "png", "jpeg"])
-#     cam_file = st.camera_input("")
-#     final_img = cam_file if cam_file else img_file
-
-# if final_img:
-#     img = Image.open(final_img).convert("RGB")
-    
-#     with col_right:
-#         st.subheader(T["results_header"])
-#         with st.spinner("AI analyzing..."):
-#             predictions = classifier([img])
-#             res = predictions[0][0]
-#             label = res['label']
-#             confidence = res['score']
-
-#             # Display Diagnosis Card
-#             st.metric("Condition", label, f"{confidence*100:.1f}%")
-
-#             # Load Knowledge
-#             try:
-#                 with open('knowledge.json') as f: kb = json.load(f)
-#                 data = kb.get(label, {"symptoms": "N/A", "pesticide": "Check manual", "hindi_pest": "विशेषज्ञ से पूछें"})
-#             except:
-#                 data = {"symptoms": "Error loading DB", "pesticide": "N/A", "hindi_pest": "त्रुटि"}
-
-#             # Recommendations Tabs
-#             t1, t2, t3 = st.tabs([T["treatment_tab"], T["opti_tab"], T["expert_header"]])
-            
-#             with t1:
-#                 st.write(f"**Symptoms:** {data.get('symptoms', '...')}")
-#                 st.success(f"**Recommended:** {data['pesticide'] if selected_lang == 'English' else data.get('hindi_pest', '...')}")
-            
-#             with t2:
-#                 # DYNAMIC MATH BASED ON FIELD SIZE & CONFIDENCE
-#                 # Formula: Savings = Field_Size * Confidence_Factor
-#                 water_saved = field_size * 120 * confidence 
-#                 pest_saved = field_size * 2.5 * confidence
-                
-#                 st.info(f"By targeting only the infected **{label}** clusters:")
-#                 st.write(f"💧 {T['metrics'][0]}: **{water_saved:.1f} Liters**")
-#                 st.write(f"🧪 {T['metrics'][1]}: **{pest_saved:.2f} kg**")
-
-#             with t3:
-#                 with st.form("expert_form"):
-#                     u_phone = st.text_input("Mobile / फ़ोन")
-#                     u_msg = st.text_area("Describe issue / समस्या बताएं")
-#                     if st.form_submit_button(T["expert_btn"]):
-#                         st.balloons()
-#                         st.success(f"{T['expert_success']} {u_phone}")
-
-# # --- ANALYTICS SECTION ---
-# st.divider()
-# st.subheader("📊 " + ("Real-time Impact Map" if selected_lang == "English" else "वास्तविक समय प्रभाव मानचित्र"))
-
-# # Dynamic Graph based on field size
-# m1, m2, m3 = st.columns(3)
-# # Logic: If field is larger, yield impact looks bigger
-# potential_yield = 15 + (field_size * 0.5)
-
-# m1.metric(T["metrics"][0], f"{field_size * 450:.0f} L")
-# m2.metric(T["metrics"][1], f"{field_size * 1.2:.1f} kg")
-# m3.metric(T["metrics"][2], f"↑ {potential_yield:.1f}%")
-
-# # Sample chart
-# chart_data = pd.DataFrame({
-#     'Metric': ['Chemicals', 'Water', 'Labor'],
-#     'Traditional': [100, 100, 100],
-#     'CropPulse': [100 - (confidence*40), 100 - (confidence*30), 80]
-# })
-# fig = px.bar(chart_data, x='Metric', y=['Traditional', 'CropPulse'], barmode='group', color_discrete_sequence=['#bdbdbd', '#2e7d32'])
-# st.plotly_chart(fig, width='stretch')
