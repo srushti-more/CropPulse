@@ -1,47 +1,23 @@
 {
-  "Rice___Bacterial_leaf_blight": {
-    "symptoms": "Water-soaked streaks on leaves that turn yellow or white; wavy margins along the leaf blades.",
-    "pesticide": "Apply Streptocycline mixed with Copper Oxychloride.",
-    "hindi_pest": "कॉपर ऑक्सीक्लोराइड के साथ मिश्रित स्ट्रेप्टोसाइक्लिन का प्रयोग करें।"
-  },
-  "Rice___Blast": {
-    "symptoms": "Spindle-shaped spots with gray centers and brown borders on leaves (diamond shape).",
-    "pesticide": "Spray Tricyclazole or Carbendazim.",
-    "hindi_pest": "ट्राइसाइक्लाज़ोल या कार्बेन्डाजिम का छिड़काव करें।"
+  "Rice___Leaf_blast": {
+    "symptoms": "Spindle-shaped spots with ashy gray centers and brown borders on leaves.",
+    "pesticide": "Spray Tricyclazole 75 WP @ 0.6 g/liter or Carbendazim 50 WP @ 1 g/liter of water.",
+    "organic": "Desi Recipe: Mix 10 liters of 10-day-old sour buttermilk (Khatti Chhash) with 100 liters of water. Spray during early morning.",
+    "hindi_pest": "ट्राइसाइक्लाज़ोल 75 WP @ 0.6 ग्राम/लीटर या कार्बेन्डाजिम 50 WP @ 1 ग्राम/लीटर का छिड़काव करें।",
+    "dosage_per_acre": "200 Liters of solution per acre."
   },
   "Wheat___Brown_rust": {
-    "symptoms": "Small, round, orange-colored pustules appearing irregularly on the leaf surface.",
-    "pesticide": "Apply Propiconazole (Tilt) or Tebuconazole.",
-    "hindi_pest": "प्रोपिकोनाज़ोल (टिल्ट) या टेबुकोनाज़ोल का प्रयोग करें।"
-  },
-  "Wheat___Yellow_rust": {
-    "symptoms": "Yellow powdery stripes (pustules) running parallel along the leaf veins.",
-    "pesticide": "Immediate spray of Propiconazole 25 EC at 0.1% concentration.",
-    "hindi_pest": "0.1% सांद्रता पर प्रोपिकोनाज़ोल 25 EC का तुरंत छिड़काव करें।"
-  },
-  "Cotton___Bacterial_blight": {
-    "symptoms": "Angular water-soaked spots on leaves that turn brown or black; 'Black arm' on stems.",
-    "pesticide": "Spray Copper Oxychloride 50WP mixed with Streptomycin.",
-    "hindi_pest": "स्ट्रेप्टोमाइसिन के साथ मिश्रित कॉपर ऑक्सीक्लोराइड 50WP का छिड़काव करें।"
-  },
-  "Cotton___Bollworm": {
-    "symptoms": "Flared squares; holes in bolls with visible larvae or excreta.",
-    "pesticide": "Use Spinosad or Indoxacarb; install pheromone traps.",
-    "hindi_pest": "स्पिनोसैड या इंडोक्साकार्ब का प्रयोग करें; फेरोमोन जाल लगाएं।"
+    "symptoms": "Small, round, orange-to-brown pustules appearing randomly on the leaf surface.",
+    "pesticide": "Apply Propiconazole (Tilt 25 EC) @ 1 ml/liter or Tebucanazole @ 1.5 ml/liter.",
+    "organic": "Desi Recipe: 5% Neem Seed Kernel Extract (NSKE). Boil 5kg neem kernels in water, filter, and dilute to 100 liters.",
+    "hindi_pest": "प्रोपिकोनाज़ोल (Tilt 25 EC) @ 1 मिली/लीटर या टेबुकोनाज़ोल @ 1.5 मिली/लीटर का प्रयोग करें।",
+    "dosage_per_acre": "150-200 Liters of solution per acre."
   },
   "Sugarcane___Red_rot": {
-    "symptoms": "Reddish lesions on the midrib of leaves; pith of the cane turns red with white horizontal bands.",
-    "pesticide": "Use disease-free sets and treat with Carbendazim before planting.",
-    "hindi_pest": "रोगमुक्त सेट्स का उपयोग करें और रोपण से पहले कार्बेन्डाजिम से उपचार करें।"
-  },
-  "Sugarcane___Smut": {
-    "symptoms": "Appearance of a black, whip-like structure from the growing point of the sugarcane.",
-    "pesticide": "Sett treatment with Triadimefon; rogue out infected clumps.",
-    "hindi_pest": "ट्रायडेमेफोन के साथ सेट उपचार; संक्रमित गुच्छों को उखाड़ कर नष्ट करें।"
-  },
-  "Rice___Brown_spot": {
-    "symptoms": "Oval, dark brown lesions with yellow halos covering the leaf surface; leads to poor grain filling.",
-    "pesticide": "Apply Mancozeb or Edifenphos; improve soil nutrition.",
-    "hindi_pest": "मैनकोज़ेब या एडिफ़ेनफ़ोस लगाएं; मिट्टी के पोषण में सुधार करें।"
+    "symptoms": "Reddish lesions on the midrib; internal cane tissue turns red with white transverse bands.",
+    "pesticide": "Drench soil with Carbendazim @ 1g/liter. Note: Primarily managed via set-treatment before planting.",
+    "organic": "Desi Recipe: Soil application of Trichoderma viride mixed with 50kg well-rotted Farm Yard Manure (FYM).",
+    "hindi_pest": "कार्बेन्डाजिम @ 1 ग्राम/लीटर के साथ मिट्टी का उपचार करें।",
+    "dosage_per_acre": "Apply FYM mixture at the base of stalks."
   }
 }
