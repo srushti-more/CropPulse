@@ -53,18 +53,20 @@ st.set_page_config(page_title="CropPulse AI", page_icon="🌱", layout="wide")
 if 'scan_history' not in st.session_state:
     st.session_state.scan_history = []
 
-# --- CUSTOM CSS (Enhanced Blur & High Contrast) ---
+# --- CUSTOM CSS (Enhanced Blur, Darker Background & Visibility) ---
 st.markdown("""
     <style>
     .stApp {
+        /* Darker gradient for better text contrast */
         background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), 
                     url("https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80");
         background-size: cover;
         background-attachment: fixed;
     }
     
+    /* Solid Glassmorphism Cards */
     .glass-card {
-        background: rgba(15, 20, 15, 0.8); 
+        background: rgba(15, 20, 15, 0.85); 
         backdrop-filter: blur(25px) saturate(160%); 
         border-radius: 20px;
         padding: 30px;
@@ -78,6 +80,7 @@ st.markdown("""
         text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }
 
+    /* Metric Highlighting */
     [data-testid="stMetric"] {
         background: rgba(255, 255, 255, 0.03) !important;
         border: 1px solid rgba(144, 238, 144, 0.2) !important;
@@ -88,8 +91,10 @@ st.markdown("""
 
     .stRadio label { color: white !important; font-weight: bold; }
     
+    /* Improved Uploader Visibility */
     .stFileUploader section {
         background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px dashed rgba(255,255,255,0.3) !important;
         border-radius: 15px !important;
     }
     </style>
@@ -115,7 +120,7 @@ crop_type = st.sidebar.selectbox("Crop Type", ["Rice", "Wheat", "Sugarcane", "Po
 st.title(T["title"])
 st.markdown(f"##### *{T['subtitle']}*")
 
-# --- MAIN APP ---
+# --- MAIN APP LAYOUT ---
 col_left, col_right = st.columns([1, 1.3])
 
 with col_left:
@@ -149,24 +154,31 @@ if final_img:
             clean_label = raw_label.replace("___", " - ").replace("_", " ")
             confidence = res['score']
 
-            # High-Impact Metrics
-            st.metric("Detected Condition", clean_label, f"{confidence*100:.1f}% Match")
+            # --- CONFIDENCE GUARDRAIL (Prevents Wrong Diagnosis) ---
+            if confidence < 0.50:
+                st.error("⚠️ **Low Confidence Detection**")
+                st.warning(f"AI Match is only {confidence*100:.1f}%. This might be insect damage or a rare variant.")
+                st.info("💡 **Observation:** If you see 'skeletonized' leaves (holes between veins), this is likely **Insect Damage**, not a disease. Try applying Neem Oil.")
+            else:
+                st.metric("Detected Condition", clean_label, f"{confidence*100:.1f}% Match")
 
             # Precision Actionable Logic
             affected_area = max(5, round((1.1 - confidence) * 100)) 
             chem_saved = 100 - affected_area
             yield_prot = round(confidence * 100, 1)
 
-            m1, m2, m3 = st.columns(3)
-            with m1:
-                st.markdown(f"🎯 **Target Zone**\n### {affected_area}%")
-                st.caption("Apply treatment here")
-            with m2:
-                st.markdown(f"🛡️ **Yield Saved**\n### {yield_prot}%")
-                st.caption("Harvest protected")
-            with m3:
-                st.markdown(f"💰 **Cost Saved**\n### {chem_saved}%")
-                st.caption("Lower input cost")
+            # Feature Highlights (Shown only if confidence is usable)
+            if confidence > 0.30:
+                m1, m2, m3 = st.columns(3)
+                with m1:
+                    st.markdown(f"🎯 **Target Zone**\n### {affected_area}%")
+                    st.caption("Apply treatment here")
+                with m2:
+                    st.markdown(f"🛡️ **Yield Saved**\n### {yield_prot}%")
+                    st.caption("Harvest protected")
+                with m3:
+                    st.markdown(f"💰 **Cost Saved**\n### {chem_saved}%")
+                    st.caption("Lower input cost")
 
             # Update History
             now = datetime.now().strftime("%H:%M:%S")
@@ -179,8 +191,8 @@ if final_img:
                 with open('knowledge.json') as f:
                     kb = json.load(f)
                 data = kb.get(raw_label) or kb.get(clean_label) or {
-                    "symptoms": "Symptoms details pending for this variant.", 
-                    "pesticide": "Consult local Krishi Vigyan Kendra.", 
+                    "symptoms": "Detailed symptoms pending for this variant.", 
+                    "pesticide": "Consult your local Krishi Vigyan Kendra.", 
                     "organic": "Apply diluted Neem Oil (5ml/L).",
                     "hindi_pest": "स्थानीय कृषि केंद्र से सलाह लें।"
                 }
@@ -210,7 +222,7 @@ if final_img:
                              color_discrete_sequence=['#FF4B4B', '#00C851'])
                 fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color="white", showlegend=False, height=200, margin=dict(t=0,b=0,l=0,r=0))
                 st.plotly_chart(fig, use_container_width=True)
-                st.write(f"Estimated **{chem_saved * field_size * 0.1:.1f} kg** chemical reduction for {field_size} acres.")
+                st.write(f"Estimated **{chem_saved * field_size * 0.1:.1f} kg** chemical reduction for your farm.")
 
             with tab3:
                 with st.form("expert_form"):
@@ -239,8 +251,7 @@ if st.session_state.scan_history:
         st.dataframe(df_hist.tail(3), hide_index=True)
 else:
     st.info("Perform a scan to see health history.")
-st.markdown('</div>', unsafe_allow_html=True)
-
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # import streamlit as st
 # try:
